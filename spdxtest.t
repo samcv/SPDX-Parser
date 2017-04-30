@@ -1,6 +1,7 @@
 use Test;
 use lib 'lib';
 use SPDX::Parser;
+my $first-test-only = True;
 my @list =
     'MIT AND (LGPL-2.1+ OR BSD-3-Clause)' => 12,
     '(MIT AND LGPL-2.1+) OR BSD-3-Clause' => 12,
@@ -10,39 +11,21 @@ my @list =
     'MIT' => (3, ${:exceptions($[]), :is-simple, :licenses($[["MIT"],])}),
     'GPL-3.0 WITH Madeup-exception' => 6
 ;
-my @blacklist = 'a';
-my @lics = 'a', 'b', 'c';
-say so @lics.any eq @blacklist.any;
 my $res = Grammar::SPDX::Expression.parse(@list[4].key, actions => parsething.new);
 say '===========';
 say $res;
 $res .= made;
 say $res.perl;
+my @ready = 2,4,5;
 is-deeply
     Grammar::SPDX::Expression.parse(
-        @list[2].key,
+        @list[$_].key,
         actions => parsething.new
         ).made,
-    ${:exceptions($[]), :!is-simple, :licenses($[["MIT", "LGPL-2.1+"],])}
-;
-
-is-deeply
-    Grammar::SPDX::Expression.parse(
-        @list[5].key,
-        actions => parsething.new
-        ).made,
-    @list[5].value[1]
-;
-
-is-deeply
-    Grammar::SPDX::Expression.parse(
-        @list[4].key,
-        actions => parsething.new
-        ).made,
-        @list[4].value[1]
-;
-
-exit;
+    @list[$_].value[1],
+    @list[$_].key
+for @ready;
+do { done-testing; exit} if $first-test-only;
 for @list {
     my $parse = Grammar::SPDX::Expression.parse(.key, :actions(parsething.new));
     ok $parse, .key;
