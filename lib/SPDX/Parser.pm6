@@ -1,7 +1,6 @@
 grammar Grammar::SPDX::Expression {
     regex TOP {
         \s*
-        | <paren-expression>
         | <simple-expression>
         | <compound-expression>
 
@@ -28,43 +27,50 @@ grammar Grammar::SPDX::Expression {
     token or-exp {
         [
             | <simple-expression>
-            | <paren-expression>
-        #    | <compound-expression>
+            | <compound-expression>
         ]+ %
         [ <.ws> [ 'OR' ] <.ws> ]
     }
     token and-exp {
         [
             | <simple-expression>
-            | <paren-expression>
-            #| <compound-expression>
+            | <compound-expression>
         ]+ %
         [ <.ws> [ 'AND' ] <.ws> ]
     }
     token with-exp {
         [
             | <simple-expression>
-            | <paren-expression>
-        #    | <compound-expression>
+            | <compound-expression>
         ]+ %
         [ <.ws> [ 'WITH' ] <.ws> ]
     }
-    token paren-expression {
-        '(' ~ ')'
-        [
-        #    | <or-exp>
-        #    | <simple-expression>
-            | <compound-expression>
-        ]
+    proto regex compound-expression { * }
+    regex compound-expression:sym<paren>  {
+        [\s* '('] ~ [')' \s* ]
+
+       [
+           | <or-exp>
+           | <and-exp>
+           | <with-exp>
+       #    | <simple-expression>
+       ]
     }
-    regex compound-expression {
+    regex compound-expression:sym<noparen> {
         [
             | <or-exp>
             | <and-exp>
             | <with-exp>
-        #    | <paren-expression>
         #    | <simple-expression>
         ]
         #[ <complex-expression>+ ]?
     }
+}
+class parsething {
+    method TOP ($/) {
+    }
+    method and-exp ($/) {
+        say $/;
+    }
+
 }

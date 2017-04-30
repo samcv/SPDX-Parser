@@ -11,5 +11,11 @@ my @list =
     'MIT' => (3, ${:exceptions($[]), :is-simple, :licenses($[["MIT"],])}),
     'GPL-3.0 WITH Madeup-exception' => 6
 ;
-my $res = Grammar::SPDX::Expression.parse('(THIS OR MIT) AND FOO');
-say $res;
+#for  {
+    my $key = 'MIT AND FOO AND BAR';
+    my $res = Grammar::SPDX::Expression.parse($key,
+    actions => parsething.new
+    );;
+    say $res;
+    #`$res.made;
+#}
