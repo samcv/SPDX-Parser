@@ -21,39 +21,39 @@ grammar Grammar::SPDX::Expression {
         | <license-ref>
     }
     proto token complex-expression { * }
-    regex complex-expression:sym<WITH> {
+    token complex-expression:sym<WITH> {
         'WITH' <.ws>
         <license-exception-id>
     }
-    regex or-exp {
+    token or-exp {
         [
             | <simple-expression>
             | <paren-expression>
-            | <compound-expression>
+        #    | <compound-expression>
         ]+ %
         [ <.ws> [ 'OR' ] <.ws> ]
     }
-    regex and-exp {
+    token and-exp {
         [
             | <simple-expression>
             | <paren-expression>
-            | <compound-expression>
+            #| <compound-expression>
         ]+ %
         [ <.ws> [ 'AND' ] <.ws> ]
     }
-    regex with-exp {
+    token with-exp {
         [
             | <simple-expression>
             | <paren-expression>
-            | <compound-expression>
+        #    | <compound-expression>
         ]+ %
         [ <.ws> [ 'WITH' ] <.ws> ]
     }
-    regex paren-expression {
+    token paren-expression {
         '(' ~ ')'
         [
         #    | <or-exp>
-            | <simple-expression>
+        #    | <simple-expression>
             | <compound-expression>
         ]
     }
