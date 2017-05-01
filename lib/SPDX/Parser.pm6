@@ -1,12 +1,12 @@
 grammar Grammar::SPDX::Expression {
     regex TOP {
         \s*
-        | <simple-expression>
-        | <compound-expression>
-
+        [
+            | <simple-expression>
+            | <compound-expression>
+        ]
         \s*
     }
-
     regex idstring { [<.alpha> | <.digit> | '-' | '.']+ }
 
     regex license-id { <.idstring> }
@@ -73,13 +73,16 @@ class parsething {
     has Bool:D $!simple = True;
     has $!rand = 900.rand.Int;
     method TOP ($/) {
+        say $/.elems;
         say "$!rand HIT TOP";
         say $/;
-        if ! $<compound-expression> {
+        if ! $<compound-expression> and !@!array.elems {
             say "NO COMPAND";
-            say @!all-licenses;
-            for ^@!all-licenses.elems {
-                @!array.push: @!all-licenses.pop;
+            say 'TOP \@!all-licenses: ', @!all-licenses.perl;
+            #@!all-licenses»
+            @!array.append: @!all-licenses;
+            for @!all-licenses {
+                #@!array[$!elem].push:$_;
             }
             say @!array;
         }
@@ -108,7 +111,14 @@ class parsething {
                 say $<simple-expression>;
                 note "going to next elem in array";
                 $!elem++;
-                @!array[$!elem].push: $<simple-expression>[$_].Str;
+                say 'OR @!array: ', @!array.perl;
+                say 'OR @!all-licenses: ', @!all-licenses.perl;
+                if @!array[$!elem] !~~ Array {
+                    # TODO eventually shouldn't need this code
+                    say "Trying to fix \@!array[$!elem] deleting Str";
+                    @!array[$!elem] = [];
+                }
+                push @!array[$!elem], $<simple-expression>[$_].Str;
             }
         }
     }
