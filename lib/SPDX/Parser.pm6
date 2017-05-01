@@ -85,6 +85,7 @@ class parsething {
             note 'or-exp simple';
             $!elem--;
             for ^$<simple-expression>.elems {
+                note "going to next elem in array";
                 $!elem++;
                 @!array[$!elem].push: $<simple-expression>[$_].Str;
             }
