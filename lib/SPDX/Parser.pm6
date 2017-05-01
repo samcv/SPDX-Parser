@@ -67,10 +67,29 @@ grammar Grammar::SPDX::Expression {
     }
 }
 class parsething {
+    has @!array;
+    has $!elem = 0;
     method TOP ($/) {
+        make { array => @!array }
     }
     method and-exp ($/) {
-        say $/;
+        if $<simple-expression> {
+            note 'simple';
+            for ^$<simple-expression>.elems {
+                @!array[$!elem].push: $<simple-expression>[$_].Str;
+            }
+        }
     }
+    method or-exp ($/) {
+        if $<simple-expression> {
+            note 'or-exp simple';
+            $!elem--;
+            for ^$<simple-expression>.elems {
+                $!elem++;
+                @!array[$!elem].push: $<simple-expression>[$_].Str;
+            }
+        }
+    }
+
 
 }
