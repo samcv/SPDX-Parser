@@ -7,7 +7,7 @@ grammar Grammar::SPDX::Expression {
         ]
         \s*
     }
-    regex idstring { [<.alpha> | <.digit> | '-' | '.']+ }
+    regex idstring { [<.alpha> | <.digit> | '-' | '.']+     }
 
     regex license-id { <.idstring> }
 
@@ -24,19 +24,12 @@ grammar Grammar::SPDX::Expression {
         'WITH' <.ws>
         <license-exception-id>
     }
-    token or-exp {
+    token or-and {
         [
             | <simple-expression>
             | <compound-expression>
         ]+ %
-        [ <.ws> [ 'OR' ] <.ws> ]
-    }
-    token and-exp {
-        [
-            | <simple-expression>
-            | <compound-expression>
-        ]+ %
-        [ <.ws> [ 'AND' ] <.ws> ]
+        [ <.ws> $<keyword>=('OR'|'AND'|'WITH' ) <.ws> ]
     }
     token with-exp {
         [
@@ -47,20 +40,20 @@ grammar Grammar::SPDX::Expression {
     }
     proto regex compound-expression { * }
     regex compound-expression:sym<paren>  {
-        [\s* '('] ~ [')' \s* ]
+        [\s* '('] ~ [')' \s* ]?
 
        [
-           | <or-exp>
-           | <and-exp>
-           | <with-exp>
+           | <or-and>
+         #  | <and-exp>
+         #  | <with-exp>
        #    | <simple-expression>
        ]
     }
     regex compound-expression:sym<noparen> {
         [
-            | <or-exp>
-            | <and-exp>
-            | <with-exp>
+            | <or-and>
+        #    | <and-exp>
+        #    | <with-exp>
         #    | <simple-expression>
         ]
         #[ <complex-expression>+ ]?
@@ -92,33 +85,53 @@ class parsething {
         die if $/.elems > 1;
         @!all-licenses.push: ~$/;
     }
-    method and-exp ($/) {
-        $!simple = False;
-        say "setting $!simple to filse";
-        if $<simple-expression> {
-            note 'simple';
-            for ^$<simple-expression>.elems {
-                @!array[$!elem].push: $<simple-expression>[$_].Str;
-            }
+    method fix-array {
+        if @!array[$!elem] !~~ Array {
+            # TODO eventually shouldn't need this code
+            say "Trying to fix \@!array[$!elem] deleting Str";
+            @!array[$!elem] = [];
         }
     }
-    method or-exp ($/) {
-        $!simple = False;
-        if $<simple-expression> {
-            note 'or-exp simple';
-            $!elem--;
-            for ^$<simple-expression>.elems {
-                say $<simple-expression>;
-                note "going to next elem in array";
-                $!elem++;
-                say 'OR @!array: ', @!array.perl;
-                say 'OR @!all-licenses: ', @!all-licenses.perl;
-                if @!array[$!elem] !~~ Array {
-                    # TODO eventually shouldn't need this code
-                    say "Trying to fix \@!array[$!elem] deleting Str";
-                    @!array[$!elem] = [];
+    method or-and ($/) {
+        # $<keyword> should be in order of appearance
+        say '##########', $<keyword>.elems;
+        .say for $<keyword>;
+        my $and = True;
+        my $or = True;
+        for $<keyword> {
+            $and = False if $_.Str ne 'AND';
+            $or = False if $_.Str ne 'OR';
+        }
+        say "$and $or ##########", $<expr>.elems;
+        if $and {
+            $!simple = False;
+            say "All of them are AND keyword";
+            if $<simple-expression> {
+                note 'simple';
+                self.fix-array;
+                for ^$<simple-expression>.elems {
+                    push @!array[$!elem], $<simple-expression>[$_].Str;
                 }
-                push @!array[$!elem], $<simple-expression>[$_].Str;
+            }
+        }
+        elsif $or {
+            $!simple = False;
+            if $<simple-expression> {
+                note 'or-and simple';
+                $!elem--;
+                for ^$<simple-expression>.elems {
+                    say $<simple-expression>;
+                    note "going to next elem in array";
+                    $!elem++;
+                    say 'OR @!array: ', @!array.perl;
+                    say 'OR @!all-licenses: ', @!all-licenses.perl;
+                    if @!array[$!elem] !~~ Array {
+                        # TODO eventually shouldn't need this code
+                        say "Trying to fix \@!array[$!elem] deleting Str";
+                        @!array[$!elem] = [];
+                    }
+                    push @!array[$!elem], $<simple-expression>[$_].Str;
+                }
             }
         }
     }
