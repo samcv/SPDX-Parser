@@ -69,10 +69,29 @@ grammar Grammar::SPDX::Expression {
 class parsething {
     has @!array;
     has $!elem = 0;
+    has @!all-licenses;
+    has Bool:D $!simple = True;
+    has $!rand = 900.rand.Int;
     method TOP ($/) {
+        say "$!rand HIT TOP";
+        say $/;
+        if ! $<compound-expression> {
+            say "NO COMPAND";
+            say @!all-licenses;
+            for ^@!all-licenses.elems {
+                @!array.push: @!all-licenses.pop;
+            }
+            say @!array;
+        }
         make { array => @!array }
     }
+    method simple-expression ($/) {
+        die if $/.elems > 1;
+        @!all-licenses.push: ~$/;
+    }
     method and-exp ($/) {
+        $!simple = False;
+        say "setting $!simple to filse";
         if $<simple-expression> {
             note 'simple';
             for ^$<simple-expression>.elems {
@@ -81,10 +100,12 @@ class parsething {
         }
     }
     method or-exp ($/) {
+        $!simple = False;
         if $<simple-expression> {
             note 'or-exp simple';
             $!elem--;
             for ^$<simple-expression>.elems {
+                say $<simple-expression>;
                 note "going to next elem in array";
                 $!elem++;
                 @!array[$!elem].push: $<simple-expression>[$_].Str;
